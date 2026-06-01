@@ -1,10 +1,207 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Resultado da Análise</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .resumo {
+            margin-bottom: 30px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .botao {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            text-decoration: none;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #333;
+        }
+
+        .grafico-container {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 30px;
+        }
+
+        .resultado-estatistico {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+        }
+    </style>
 </head>
+
 <body>
-$END$
+
+    <h1>Resultado da Análise da Lei de Benford</h1>
+
+    <div class="resumo">
+
+        <p>
+            <strong>Coluna analisada:</strong>
+            {{ resultado.coluna }}
+        </p>
+
+        <p>
+            <strong>Registros válidos:</strong>
+            {{ resultado.registros_validos }}
+        </p>
+
+        <p>
+            <strong>Desvio total:</strong>
+            {{ resultado.desvio_total }}
+        </p>
+
+        <p>
+            <strong>Conclusão:</strong>
+            {{ resultado.conclusao }}
+        </p>
+
+        <div class="resultado-estatistico">
+
+            <h2>Testes Estatísticos</h2>
+
+            <p>
+                <strong>MAD:</strong>
+                {{ resultado.mad }}
+            </p>
+
+            <p>
+                <strong>Classificação MAD:</strong>
+                {{ resultado.classificacao_mad }}
+            </p>
+
+            <p>
+                <strong>Qui-Quadrado:</strong>
+                {{ resultado.qui_quadrado }}
+            </p>
+
+            <p>
+                <strong>Valor Crítico (5%):</strong>
+                {{ resultado.valor_critico }}
+            </p>
+
+            {% if resultado.qui_quadrado < resultado.valor_critico %}
+
+            <p>
+                <strong>Resultado Qui-Quadrado:</strong>
+                Não há evidência estatística significativa de desvio da Lei de Benford.
+            </p>
+
+            {% else %}
+
+            <p>
+                <strong>Resultado Qui-Quadrado:</strong>
+                Há evidência estatística significativa de desvio da Lei de Benford.
+            </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <h2>Comparação com a Lei de Benford</h2>
+
+    <div class="grafico-container">
+        <canvas id="graficoBenford"></canvas>
+    </div>
+
+    <h2>Detalhamento por Dígito</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Dígito</th>
+                <th>Observado (%)</th>
+                <th>Benford (%)</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for digito in resultado.digitos %}
+            <tr>
+                <td>{{ digito }}</td>
+                <td>{{ resultado.observado[digito|string] }}</td>
+                <td>{{ resultado.benford[digito|string] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="/" class="botao">
+        Nova análise
+    </a>
+
+    <script>
+        const ctx = document.getElementById("graficoBenford");
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: {{ resultado.digitos | tojson }},
+                datasets: [
+                    {
+                        label: "Observado",
+                        data: {{ resultado.observado_lista | tojson }}
+                    },
+                    {
+                        label: "Benford",
+                        data: {{ resultado.benford_lista | tojson }}
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Percentual (%)"
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
 </body>
 </html>
