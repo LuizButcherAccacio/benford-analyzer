@@ -119,7 +119,7 @@ else:
 print(f"\nConclusão: {conclusao}")
 
 """
-
+"""
 import pandas as pd
 import math
 from collections import Counter
@@ -128,7 +128,7 @@ from collections import Counter
 def analisar_benford(df, coluna):
 
     if coluna not in df.columns:
-        raise ValueError("Coluna não encontrada")
+        raise ValueError("Column not found")
 
     primeiros_digitos = []
 
@@ -145,7 +145,7 @@ def analisar_benford(df, coluna):
                 break
 
     if len(primeiros_digitos) == 0:
-        raise ValueError("Nenhum número válido encontrado")
+        raise ValueError("No valid numbers found")
 
     contagem = Counter(primeiros_digitos)
     total = len(primeiros_digitos)
@@ -175,14 +175,14 @@ def analisar_benford(df, coluna):
         )
 
     if desvio_total < 10:
-        conclusao = "Boa aderência à Lei de Benford"
+        conclusao = "High conformity with Benford's Law"
+
     elif desvio_total < 20:
-        conclusao = "Aderência moderada à Lei de Benford"
+        conclusao = "Moderate conformity with Benford's Law"
+
     else:
-        conclusao = "Baixa aderência à Lei de Benford"
+        conclusao = "Low conformity with Benford's Law"
 
-
-    # Calculo Mad
     mad = 0
 
     for digito in range(1, 10):
@@ -193,43 +193,70 @@ def analisar_benford(df, coluna):
 
     mad = mad / 9
 
-
-    #Calculo qui quadrado
     qui_quadrado = 0
 
     for digito in range(1, 10):
+
         observado_qtd = contagem[digito]
 
         esperado_qtd = (
-                               benford[str(digito)] / 100
-                       ) * total
+            benford[str(digito)] / 100
+        ) * total
 
         qui_quadrado += (
-                                (observado_qtd - esperado_qtd) ** 2
-                        ) / esperado_qtd
+            (observado_qtd - esperado_qtd) ** 2
+        ) / esperado_qtd
 
     if mad < 0.006:
-        classificacao_mad = "Conformidade próxima"
+
+        classificacao_mad = "Close conformity"
 
     elif mad < 0.012:
-        classificacao_mad = "Conformidade aceitável"
+
+        classificacao_mad = "Acceptable conformity"
 
     elif mad < 0.015:
-        classificacao_mad = "Conformidade marginal"
+
+        classificacao_mad = "Marginal conformity"
 
     else:
-        classificacao_mad = "Não conformidade"
+
+        classificacao_mad = "Non-conformity"
+
+    desvios_lista = []
+
+    for i in range(1, 10):
+
+        desvios_lista.append(
+            round(
+                observado[str(i)]
+                - benford[str(i)],
+                2
+            )
+        )
 
     return {
+
         "coluna": coluna,
+
         "registros_validos": total,
+
         "observado": observado,
+
         "benford": benford,
 
-        "desvio_total": round(desvio_total, 2),
+        "desvio_total": round(
+            desvio_total,
+            2
+        ),
+
         "conclusao": conclusao,
 
-        "mad": round(mad, 6),
+        "mad": round(
+            mad,
+            6
+        ),
+
         "classificacao_mad": classificacao_mad,
 
         "qui_quadrado": round(
@@ -239,7 +266,9 @@ def analisar_benford(df, coluna):
 
         "valor_critico": 15.51,
 
-        "digitos": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "digitos": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9
+        ],
 
         "observado_lista": [
             observado[str(i)]
@@ -249,5 +278,173 @@ def analisar_benford(df, coluna):
         "benford_lista": [
             benford[str(i)]
             for i in range(1, 10)
-        ]
-    } 
+        ],
+
+        "desvios_lista": desvios_lista
+    }
+```
+"""
+
+import pandas as pd
+import math
+from collections import Counter
+
+
+def analisar_benford(df, coluna):
+
+    if coluna not in df.columns:
+        raise ValueError("Column not found")
+
+    primeiros_digitos = []
+
+    for valor in df[coluna]:
+
+        if pd.isna(valor):
+            continue
+
+        valor_str = str(abs(valor))
+
+        for caractere in valor_str:
+            if caractere.isdigit() and caractere != "0":
+                primeiros_digitos.append(int(caractere))
+                break
+
+    if len(primeiros_digitos) == 0:
+        raise ValueError("No valid numbers found")
+
+    contagem = Counter(primeiros_digitos)
+    total = len(primeiros_digitos)
+
+    observado = {}
+
+    for digito in range(1, 10):
+        observado[str(digito)] = round(
+            contagem[digito] / total * 100,
+            2
+        )
+
+    benford = {}
+
+    for digito in range(1, 10):
+        benford[str(digito)] = round(
+            math.log10(1 + 1 / digito) * 100,
+            2
+        )
+
+    desvio_total = 0
+
+    for digito in range(1, 10):
+        desvio_total += abs(
+            observado[str(digito)]
+            - benford[str(digito)]
+        )
+
+    if desvio_total < 10:
+        conclusao = "High conformity with Benford's Law"
+
+    elif desvio_total < 20:
+        conclusao = "Moderate conformity with Benford's Law"
+
+    else:
+        conclusao = "Low conformity with Benford's Law"
+
+    mad = 0
+
+    for digito in range(1, 10):
+        mad += abs(
+            (observado[str(digito)] / 100)
+            - (benford[str(digito)] / 100)
+        )
+
+    mad = mad / 9
+
+    qui_quadrado = 0
+
+    for digito in range(1, 10):
+
+        observado_qtd = contagem[digito]
+
+        esperado_qtd = (
+            benford[str(digito)] / 100
+        ) * total
+
+        qui_quadrado += (
+            (observado_qtd - esperado_qtd) ** 2
+        ) / esperado_qtd
+
+    if mad < 0.006:
+
+        classificacao_mad = "Close conformity"
+
+    elif mad < 0.012:
+
+        classificacao_mad = "Acceptable conformity"
+
+    elif mad < 0.015:
+
+        classificacao_mad = "Marginal conformity"
+
+    else:
+
+        classificacao_mad = "Non-conformity"
+
+    desvios_lista = []
+
+    for i in range(1, 10):
+
+        desvios_lista.append(
+            round(
+                observado[str(i)]
+                - benford[str(i)],
+                2
+            )
+        )
+
+    return {
+
+        "coluna": coluna,
+
+        "registros_validos": total,
+
+        "observado": observado,
+
+        "benford": benford,
+
+        "desvio_total": round(
+            desvio_total,
+            2
+        ),
+
+        "conclusao": conclusao,
+
+        "mad": round(
+            mad,
+            6
+        ),
+
+        "classificacao_mad": classificacao_mad,
+
+        "qui_quadrado": round(
+            qui_quadrado,
+            4
+        ),
+
+        "valor_critico": 15.51,
+
+        "digitos": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9
+        ],
+
+        "observado_lista": [
+            observado[str(i)]
+            for i in range(1, 10)
+        ],
+
+        "benford_lista": [
+            benford[str(i)]
+            for i in range(1, 10)
+        ],
+
+        "desvios_lista": desvios_lista
+    }
+
